@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import { Geolocation } from '@capacitor/geolocation';
 import { useToast } from "@/components/ui/use-toast";
 import { WeatherData } from "@/types/weather";
+import { LocationInput } from "@/components/LocationInput";
 
 const Index = () => {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [manualLocation, setManualLocation] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -23,15 +25,13 @@ const Index = () => {
           lon: coordinates.coords.longitude,
         });
         
-        // For demonstration, we'll reverse geocode using a mock
-        // In a real app, you would use a geocoding service
         const cityName = await getCityName(coordinates.coords.latitude, coordinates.coords.longitude);
         console.log("Location detected:", cityName);
       } catch (error) {
         console.error("Location error:", error);
         toast({
-          title: "Location services unavailable",
-          description: "Please enable location access to get accurate weather data.",
+          title: "Location access denied",
+          description: "Please enter your location manually",
           variant: "destructive",
         });
       }
@@ -40,18 +40,26 @@ const Index = () => {
     getCurrentPosition();
   }, [toast]);
 
+  const handleManualLocation = (inputLocation: string) => {
+    setManualLocation(inputLocation);
+    toast({
+      title: "Location updated",
+      description: `Weather data for ${inputLocation}`,
+    });
+  };
+
   // Mock function to simulate reverse geocoding
   const getCityName = async (lat: number, lon: number) => {
-    // In a real app, you would call a geocoding API here
     return "Current Location";
   };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["weather", location?.lat, location?.lon],
+    queryKey: ["weather", location?.lat, location?.lon, manualLocation],
     queryFn: async () => {
       // This is mock data - in a real app, you would fetch from a weather API
+      // and use either the coordinates or the manual location
       return {
-        location: "Current Location",
+        location: manualLocation || "Current Location",
         temperature: 22,
         condition: "Partly Cloudy",
         humidity: 65,
@@ -73,10 +81,18 @@ const Index = () => {
         pressure: 1015,
       } as WeatherData;
     },
-    enabled: !!location,
+    enabled: !!(location || manualLocation),
   });
 
-  return <Weather data={data} isLoading={isLoading} />;
+  return (
+    <>
+      {!location && !manualLocation ? (
+        <LocationInput onLocationSubmit={handleManualLocation} />
+      ) : (
+        <Weather data={data} isLoading={isLoading} />
+      )}
+    </>
+  );
 };
 
 export default Index;
