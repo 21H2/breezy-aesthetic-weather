@@ -4,6 +4,7 @@ import { Weather } from "@/components/Weather";
 import { useEffect, useState } from "react";
 import { Geolocation } from '@capacitor/geolocation';
 import { useToast } from "@/components/ui/use-toast";
+import { WeatherData } from "@/types/weather";
 
 const Index = () => {
   const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
@@ -40,7 +41,21 @@ const Index = () => {
         humidity: 65,
         windSpeed: 12,
         feelsLike: 23,
-      };
+        forecast: [
+          { day: "Today", high: 24, low: 18, condition: "Partly Cloudy" },
+          { day: "Tomorrow", high: 25, low: 17, condition: "Sunny" },
+          { day: "Wednesday", high: 22, low: 16, condition: "Rain" },
+          { day: "Thursday", high: 20, low: 15, condition: "Thunderstorm" },
+          { day: "Friday", high: 21, low: 16, condition: "Cloudy" }
+        ],
+        uvIndex: 6,
+        precipitation: 20,
+        airQuality: "Good",
+        sunriseTime: "06:45 AM",
+        sunsetTime: "07:30 PM",
+        moonPhase: "Waxing Crescent",
+        pressure: 1015,
+      } as WeatherData;
     },
     enabled: !!location,
   });
