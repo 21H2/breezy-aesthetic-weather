@@ -1,14 +1,51 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useQuery } from "@tanstack/react-query";
+import { Weather } from "@/components/Weather";
+import { useEffect, useState } from "react";
+import { Geolocation } from '@capacitor/geolocation';
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const getCurrentPosition = async () => {
+      try {
+        const position = await Geolocation.getCurrentPosition();
+        setLocation({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      } catch (error) {
+        toast({
+          title: "Error getting location",
+          description: "Please enable location services to get weather data.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    getCurrentPosition();
+  }, [toast]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["weather", location?.lat, location?.lon],
+    queryFn: async () => {
+      // This is mock data - in a real app, you would fetch from a weather API
+      return {
+        location: "San Francisco",
+        temperature: 22,
+        condition: "Partly Cloudy",
+        humidity: 65,
+        windSpeed: 12,
+        feelsLike: 23,
+      };
+    },
+    enabled: !!location,
+  });
+
+  return <Weather data={data} isLoading={isLoading} />;
 };
 
 export default Index;
