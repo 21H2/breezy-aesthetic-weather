@@ -13,15 +13,25 @@ const Index = () => {
   useEffect(() => {
     const getCurrentPosition = async () => {
       try {
-        const position = await Geolocation.getCurrentPosition();
-        setLocation({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude,
+        const coordinates = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 5000,
         });
+        
+        setLocation({
+          lat: coordinates.coords.latitude,
+          lon: coordinates.coords.longitude,
+        });
+        
+        // For demonstration, we'll reverse geocode using a mock
+        // In a real app, you would use a geocoding service
+        const cityName = await getCityName(coordinates.coords.latitude, coordinates.coords.longitude);
+        console.log("Location detected:", cityName);
       } catch (error) {
+        console.error("Location error:", error);
         toast({
-          title: "Error getting location",
-          description: "Please enable location services to get weather data.",
+          title: "Location services unavailable",
+          description: "Please enable location access to get accurate weather data.",
           variant: "destructive",
         });
       }
@@ -30,12 +40,18 @@ const Index = () => {
     getCurrentPosition();
   }, [toast]);
 
+  // Mock function to simulate reverse geocoding
+  const getCityName = async (lat: number, lon: number) => {
+    // In a real app, you would call a geocoding API here
+    return "Current Location";
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: ["weather", location?.lat, location?.lon],
     queryFn: async () => {
       // This is mock data - in a real app, you would fetch from a weather API
       return {
-        location: "San Francisco",
+        location: "Current Location",
         temperature: 22,
         condition: "Partly Cloudy",
         humidity: 65,

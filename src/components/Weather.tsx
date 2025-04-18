@@ -1,10 +1,9 @@
-
 import { Cloud, CloudDrizzle, CloudLightning, CloudRain, CloudSnow, CloudSun, Droplets, Gauge, Leaf, Moon, Sunrise, Sunset, ThermometerSun, Umbrella, Wind } from "lucide-react";
 import { WeatherData } from "@/types/weather";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 interface WeatherProps {
@@ -24,287 +23,181 @@ const weatherIcons: Record<string, JSX.Element> = {
 };
 
 export function Weather({ data, isLoading }: WeatherProps) {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [time, setTime] = useState<string>("");
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      setTime(timeString);
+      setTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     };
-    
     updateTime();
     const interval = setInterval(updateTime, 60000);
-    
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-black">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl font-handwriting text-white"
-        >
-          Looking outside...
-        </motion.div>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="min-h-screen bg-black flex items-center justify-center"
+      >
+        <div className="text-white font-handwriting text-3xl">
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [1, 0.8, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            Looking outside...
+          </motion.div>
+        </div>
+      </motion.div>
     );
   }
 
   if (!data) return null;
 
   return (
-    <div className="font-mono dark min-h-screen overflow-hidden relative backdrop-blur-sm">
-      {/* Background elements */}
-      <div className="fixed inset-0 -z-10 bg-black"></div>
-      <div className="fixed inset-0 -z-10 bg-[url('https://images.unsplash.com/photo-1470813740244-df37b8c1edcb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-30"></div>
-      
-      {/* Geometric shapes */}
+    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 text-white overflow-hidden">
       <motion.div 
-        initial={{ opacity: 0, x: -100 }}
-        animate={{ opacity: 0.15, x: 0 }}
-        transition={{ duration: 1 }}
-        className="fixed top-20 left-10 w-40 h-40 rounded-full border-2 border-white opacity-15 -z-5"
-      ></motion.div>
-      <motion.div 
-        initial={{ opacity: 0, x: 100 }}
-        animate={{ opacity: 0.15, x: 0 }}
-        transition={{ duration: 1, delay: 0.3 }}
-        className="fixed bottom-20 right-10 w-60 h-60 bg-white/5 opacity-15 -z-5"
-      ></motion.div>
+        className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black opacity-80 z-0"
+        style={{
+          backgroundPosition: `0px ${scrollY * 0.5}px`,
+        }}
+      />
       
-      <div className="container mx-auto px-4 py-6 z-10">
-        {/* Header */}
-        <header className="mb-8">
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="flex justify-between items-center">
-              <h1 className="text-white text-opacity-90 font-handwriting text-4xl tracking-wide">{time}</h1>
-              <motion.div 
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="text-white text-opacity-80 font-mono text-lg bg-white/10 px-3 py-1 rounded-full backdrop-blur-md"
-              >
-                {data.location}
-              </motion.div>
-            </div>
-          </motion.div>
-        </header>
+      <div className="relative z-10">
+        <motion.header 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="sticky top-0 backdrop-blur-lg bg-black/30 p-4 border-b border-white/10"
+        >
+          <div className="container mx-auto flex justify-between items-center">
+            <motion.span 
+              className="font-mono text-sm opacity-60"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              {time}
+            </motion.span>
+            <motion.h1 
+              className="font-handwriting text-2xl"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+            >
+              {data.location}
+            </motion.h1>
+          </div>
+        </motion.header>
 
-        {/* Main Content */}
-        <main className="space-y-8">
-          {/* Current Weather */}
+        <main className="container mx-auto px-4 py-8 space-y-8">
           <motion.section 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="flex flex-col md:flex-row items-center gap-6 p-4 bg-gradient-to-br from-black/70 to-black/40 backdrop-blur-lg rounded-3xl border border-white/10"
+            className="text-center"
           >
-            <div className="w-40 h-40 relative">
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 opacity-25 text-amber-200"
-              >
-                {weatherIcons[data.condition] || <Cloud className="w-full h-full" />}
-              </motion.div>
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="absolute inset-0 text-white"
-              >
-                {weatherIcons[data.condition] || <Cloud className="w-full h-full" />}
-              </motion.div>
-            </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <p className="font-handwriting text-3xl text-white mb-2">{data.condition}</p>
-              <div className="flex flex-col md:flex-row items-center md:items-end gap-4">
-                <motion.h2 
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  transition={{ 
-                    duration: 0.8,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    repeatDelay: 5
-                  }}
-                  className="font-display text-8xl font-bold text-white tracking-tight"
-                >
-                  {Math.round(data.temperature)}°
-                </motion.h2>
-                <div className="text-white/80 text-lg">
-                  <p>Feels like {Math.round(data.feelsLike)}°</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-white">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <Droplets className="w-4 h-4 text-blue-300" />
-                  <span>{data.humidity}%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Wind className="w-4 h-4 text-blue-200" />
-                  <span>{data.windSpeed} km/h</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Umbrella className="w-4 h-4 text-purple-300" />
-                  <span>{data.precipitation}%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Gauge className="w-4 h-4 text-green-300" />
-                  <span>{data.pressure} hPa</span>
-                </div>
-              </div>
-            </div>
+            <motion.div 
+              className="text-9xl font-light mb-4"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 100 }}
+            >
+              {Math.round(data.temperature)}°
+            </motion.div>
+            <div className="font-handwriting text-2xl opacity-80">{data.condition}</div>
+            <div className="text-sm mt-2 opacity-60">Feels like {data.feelsLike}°</div>
           </motion.section>
 
-          {/* Forecast */}
           <motion.section 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="p-4 bg-white/5 backdrop-blur-lg rounded-3xl border border-white/10"
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4"
           >
-            <h2 className="font-handwriting text-2xl text-white mb-4">5-Day Forecast</h2>
-            <Carousel
-              opts={{ align: "start" }}
-              className="w-full"
-            >
-              <CarouselContent>
-                {data.forecast.map((day, index) => (
-                  <CarouselItem key={index} className="md:basis-1/3 lg:basis-1/5">
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      className="p-3 bg-gradient-to-b from-white/10 to-transparent rounded-xl border border-white/10 text-white h-full"
-                    >
-                      <p className="font-serif text-lg mb-2">{day.day}</p>
-                      <div className="text-center mb-2 text-white/80">
-                        {weatherIcons[day.condition] ? (
-                          <div className="w-12 h-12 mx-auto">
-                            {weatherIcons[day.condition]}
-                          </div>
-                        ) : (
-                          <Cloud className="w-12 h-12 mx-auto" />
-                        )}
-                      </div>
-                      <div className="flex justify-between text-lg">
-                        <span className="text-white">{day.high}°</span>
-                        <span className="text-white/60">{day.low}°</span>
-                      </div>
-                    </motion.div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <div className="flex justify-center mt-4">
-                <CarouselPrevious className="relative static mx-2 bg-black/80 border-white/20" />
-                <CarouselNext className="relative static mx-2 bg-black/80 border-white/20" />
-              </div>
-            </Carousel>
+            <MetricCard icon={<Droplets />} label="Humidity" value={`${data.humidity}%`} />
+            <MetricCard icon={<Wind />} label="Wind" value={`${data.windSpeed} km/h`} />
+            <MetricCard icon={<ThermometerSun />} label="UV Index" value={`${data.uvIndex}/10`} />
+            <MetricCard icon={<Gauge />} label="Pressure" value={`${data.pressure} hPa`} />
           </motion.section>
 
-          {/* Details */}
           <motion.section 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <DetailCard 
-                title="UV Index" 
-                value={`${data.uvIndex} / 10`} 
-                icon={<ThermometerSun className="w-6 h-6 text-yellow-300" />} 
-                delay={0.1} 
-              />
-              <DetailCard 
-                title="Air Quality" 
-                value={data.airQuality} 
-                icon={<Leaf className="w-6 h-6 text-green-400" />} 
-                delay={0.2} 
-              />
-              <DetailCard 
-                title="Sun" 
-                value={`↑ ${data.sunriseTime} / ↓ ${data.sunsetTime}`} 
-                icon={<Sunrise className="w-6 h-6 text-amber-300" />} 
-                delay={0.3} 
-              />
-              <DetailCard 
-                title="Moon Phase" 
-                value={data.moonPhase} 
-                icon={<Moon className="w-6 h-6 text-blue-300" />} 
-                delay={0.4} 
-              />
+            <h2 className="font-handwriting text-xl mb-4">5-Day Forecast</h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {data.forecast.map((day, index) => (
+                <motion.div
+                  key={day.day}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="font-mono text-sm opacity-60">{day.day}</div>
+                  <div className="my-2">
+                    {weatherIcons[day.condition] || <Cloud className="w-8 h-8 mx-auto" />}
+                  </div>
+                  <div className="font-light">
+                    <span className="text-lg">{day.high}°</span>
+                    <span className="text-sm opacity-60 ml-2">{day.low}°</span>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </motion.section>
-          
-          {/* Handwritten Notes */}
-          <motion.section 
-            initial={{ opacity: 0, rotate: -2, y: 50 }}
-            animate={{ opacity: 1, rotate: -2, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.6 }}
-            className="p-6 bg-yellow-100/10 backdrop-blur-sm rounded-lg transform -rotate-2 border-2 border-yellow-100/30 text-white/90 font-handwriting"
-          >
-            <p className="text-xl">
-              {data.condition === "Rain" ? 
-                "Don't forget your umbrella today! ☔️" : 
-                data.condition === "Sunny" ? 
-                "Perfect day for a walk! Remember sunscreen! 🌞" : 
-                "Check forecast before going out! 🌤️"}
-            </p>
-            <div className="mt-3 flex justify-end">
-              <div className="h-px w-20 bg-white/40"></div>
-            </div>
-          </motion.section>
-        </main>
 
-        {/* Footer */}
-        <footer className="mt-10 text-center text-white/40 text-xs border-t border-white/10 pt-4">
-          <motion.p 
+          <motion.footer 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
+            transition={{ delay: 0.5 }}
+            className="text-center text-xs opacity-40 mt-8"
           >
-            Designed with 🖤 | Weather data updated as of today
-          </motion.p>
-        </footer>
+            <p>Last updated: {time}</p>
+          </motion.footer>
+        </main>
       </div>
     </div>
   );
 }
 
-interface DetailCardProps {
-  title: string;
-  value: string;
+interface MetricCardProps {
   icon: React.ReactNode;
-  delay: number;
+  label: string;
+  value: string;
 }
 
-function DetailCard({ title, value, icon, delay }: DetailCardProps) {
+function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.03 }}
-      className="p-4 bg-black/40 backdrop-blur-lg rounded-xl border border-white/10"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10"
     >
-      <div className="flex items-center gap-3 text-white">
-        <div className="flex-shrink-0">{icon}</div>
-        <div>
-          <p className="text-xs text-white/60 uppercase tracking-wider">{title}</p>
-          <p className="text-lg font-serif">{value}</p>
-        </div>
-      </div>
+      <motion.div 
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        className="text-white/60 mb-2"
+      >
+        {icon}
+      </motion.div>
+      <div className="text-xs opacity-60">{label}</div>
+      <div className="text-lg font-light">{value}</div>
     </motion.div>
   );
 }
